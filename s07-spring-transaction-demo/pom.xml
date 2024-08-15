@@ -63,5 +63,6 @@
 	</build>
 	<modules>
 		<module>ep01-spring-jdbc-transaction-xml</module>
+		<module>ep01-aop-xml</module>
 	</modules>
 </project>
