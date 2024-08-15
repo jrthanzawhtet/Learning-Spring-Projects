@@ -2,6 +2,7 @@ package com.tzh.spring.trx.service;
 
 import org.springframework.stereotype.Service;
 
+import com.tzh.spring.trx.dto.input.BalanceHistoryForm;
 import com.tzh.spring.trx.dto.input.CashInForm;
 import com.tzh.spring.trx.dto.input.LimitValidationForm;
 import com.tzh.spring.trx.dto.input.TransactionBaseForm;
@@ -12,6 +13,7 @@ import com.tzh.spring.trx.repo.TransactionBaseRepo;
 import com.tzh.spring.trx.repo.TransactionCahInRepo;
 import com.tzh.spring.trx.utils.BusinessException;
 import com.tzh.spring.trx.utils.constants.LedgerType;
+import com.tzh.spring.trx.utils.constants.TransactionStatus;
 import com.tzh.spring.trx.utils.constants.TransactionType;
 
 import lombok.RequiredArgsConstructor;
@@ -56,6 +58,18 @@ public class CashInServiceImpl implements CashInService{
 						account.amount(),
 						form.amount(), form.partucular()));
 		 cashInRepo.create(trxId,form);
+		 
+		 var history = new  BalanceHistoryForm(
+				 trxId, account.loginId(),
+				 account.amount(),
+				 form.amount(),
+				 LedgerType.CREDIT,
+				 form.partucular());
+		 historyRepo.create(history);
+		 
+		 var balance = account.amount() + form.amount();
+		 accountRepo.updateBalance(account.loginId(), balance);
+		 baseRepo.updateStatus(trxId,TransactionStatus.Success );
 		return trxId;
 	}
 
