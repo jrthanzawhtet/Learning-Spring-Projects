@@ -1,6 +1,7 @@
 package com.jdc.spring.aop.service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -8,7 +9,9 @@ import javax.sql.DataSource;
 import org.springframework.jdbc.core.DataClassRowMapper;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.jdc.spring.aop.model.RegistrationDto;
 import com.jdc.spring.aop.model.RegistrationForm;
@@ -28,22 +31,54 @@ public class RegistrationDaoImpl implements RegistrationDao {
 
 	@Override
 	public int create(RegistrationForm form) {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		var keyHolder = new GeneratedKeyHolder();
+		jdbcClient.sql("insert into registration(course, fees, student, phone, email) values (:course , :fees, :student, :phone, :email)")
+		.param(form)
+		.update();
+		return keyHolder.getKey().intValue();
 	}
 
 
 	@Override
 	public RegistrationDto findById(int id) {
-		// TODO Auto-generated method stub
-		return null;
+		return jdbcClient.sql("select * from registration where id = :id")
+				.param("id",id)
+				.query(rowMapper)
+				.optional().orElse(null);
 	}
 
 
 	@Override
 	public List<RegistrationDto> search(String keyword, LocalDate from, LocalDate to) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		var sql = new StringBuffer("select * from registration where 1 = 1");
+		var params = new HashMap<String, Object>();
+		if(StringUtils.hasLength(keyword)) {
+			sql.append("""
+					 and (
+					 lower(course) like :keyword or
+					 lower(student) like :keyword or
+					 lower(phone) like :keyword or
+					 lower(email) like :keyword)
+					""");
+			params.put(keyword, keyword.toLowerCase().concat("%"));
+		}
+		
+		if(null != from) {
+			sql.append(" and regist_at >= :from");
+			params.put("from", from);
+		}
+		
+		if(null != to) {
+			sql.append(" and regist_at < :to");
+			params.put("to", to.plusDays(1));
+			}
+		
+		return jdbcClient.sql(sql.toString())
+				.param(params)
+				.query(rowMapper)
+				.list();
 	}
 
 }

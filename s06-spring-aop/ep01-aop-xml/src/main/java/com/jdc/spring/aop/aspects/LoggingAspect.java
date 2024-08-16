@@ -28,12 +28,11 @@ public class LoggingAspect {
 
 			return result;
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (Throwable e) {
+			throw e;
 		} finally {
 
 		}
-		return joinPoint;
 
 	}
 
